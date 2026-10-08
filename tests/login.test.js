@@ -3,18 +3,19 @@ import http from 'k6/http';
 import { sleep, check } from 'k6';
 
 export const options = {  
-  iterations: 500, // Número de iterações que o teste irá executar, ou seja, quantas vezes a função exportada será chamada
-  vus: 10, // Número de usuários virtuais (Virtual Users) que irão executar o teste simultaneamente
-  duration: '120s', // Duração total do teste, que é de 120 segundos
+  //iterations: 500, // Número de iterações que o teste irá executar, ou seja, quantas vezes a função exportada será chamada
+  //vus: 10, // Número de usuários virtuais (Virtual Users) que irão executar o teste simultaneamente
+  //uration: '120s', // Duração total do teste, que é de 120 segundos
   thresholds: {
    http_req_duration: ['max<5000', 'p(90)<3000', 'p(95)<4000'], 
    http_req_failed: ['rate<0.01'] 
-  }
- // stages: [
- //   { duration: '10s', target: 10 }, // Ramp-up: Aumenta gradualmente o número de usuários virtuais de 0 para 10 em 10 segundos
- //   { duration: '30s', target: 20 }, // Sustentação: Mantém o número de usuários virtuais em 20 por 30 segundos
- //   { duration: '10s', target: 0 }, // Ramp-down: Reduz gradualmente o número de usuários virtuais de 20 para 0 em 10 segundos
- // ],        
+  },
+  stages: [
+    { duration: '30s', target: 10 }, // Ramp-up: Aumenta gradualmente o número de usuários virtuais de 0 para 10 em 10 segundos
+    { duration: '120s', target: 20 }, // Sustentação: Mantém o número de usuários virtuais em 20 por 30 segundos
+    { duration: '20s', target: 5 }, // Ramp-down: Reduz gradualmente o número de usuários virtuais de 20 para 0 em 10 segundos
+    { duration: '10s', target: 0 }, // Finaliza o teste com 0 usuários virtuais
+ ],        
 }
 
 // A função exportada como padrão será usada pelo k6 como ponto de entrada do script de teste. 

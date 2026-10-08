@@ -1,6 +1,7 @@
 // Escrevendo teste de performance com k6
 import http from 'k6/http';
 import { sleep, check } from 'k6';
+const postLogin = JSON.parse(open('../fixtures/postLogin.json')); // Importando o arquivo JSON com os dados de login
 
 export const options = {  
   //iterations: 500, // Número de iterações que o teste irá executar, ou seja, quantas vezes a função exportada será chamada
@@ -11,10 +12,10 @@ export const options = {
    http_req_failed: ['rate<0.01'] 
   },
   stages: [
-    { duration: '30s', target: 10 }, // Ramp-up: Aumenta gradualmente o número de usuários virtuais de 0 para 10 em 10 segundos
-    { duration: '120s', target: 20 }, // Sustentação: Mantém o número de usuários virtuais em 20 por 30 segundos
-    { duration: '20s', target: 5 }, // Ramp-down: Reduz gradualmente o número de usuários virtuais de 20 para 0 em 10 segundos
-    { duration: '10s', target: 0 }, // Finaliza o teste com 0 usuários virtuais
+    { duration: '10s', target: 10 }, // Ramp-up: Aumenta gradualmente o número de usuários virtuais de 0 para 10 em 10 segundos
+    { duration: '40s', target: 10 }, // Sustentação: Mantém o número de usuários virtuais em 10 por 40 segundos
+    { duration: '10s', target: 5 }, // Ramp-down: Reduz gradualmente o número de usuários virtuais de 10 para 0 em 10 segundos
+    { duration: '5s', target: 0 }, // Finaliza o teste com 0 usuários virtuais
  ],        
 }
 
@@ -24,10 +25,7 @@ export default function () {
   const url = 'http://localhost:3000/login';
   
   // O RequestBody é um objeto JSON que contém os dados que serão enviados no corpo da requisição POST, é o payload da requisição.
-  const payload = JSON.stringify({
-    username: 'julio.lima',
-    senha: '123456',
-  });
+  const payload = JSON.stringify(postLogin);
   
   const params = {
     headers: {

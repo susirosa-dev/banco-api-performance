@@ -1,25 +1,32 @@
 // Escrevendo teste de performance com k6
 import http from 'k6/http';
 import { sleep, check } from 'k6';
+import { pegarBaseUrl } from '../utils/variaveis.js';
+const postLogin = JSON.parse(open('../fixtures/postLogin.json')); // Importando o arquivo JSON com os dados de login
 
 export const options = {  
-  iterations: 10,
+  //iterations: 500, // Número de iterações que o teste irá executar, ou seja, quantas vezes a função exportada será chamada
+  //vus: 10, // Número de usuários virtuais (Virtual Users) que irão executar o teste simultaneamente
+  //uration: '120s', // Duração total do teste, que é de 120 segundos
   thresholds: {
-   http_req_duration: ['avg<3', 'p(90)<3', 'p(95)<5'],
+   http_req_duration: ['max<5000', 'p(90)<3000', 'p(95)<4000'], 
    http_req_failed: ['rate<0.01'] 
-  }
+  },
+  stages: [
+    { duration: '10s', target: 10 }, // Ramp-up: Aumenta gradualmente o número de usuários virtuais de 0 para 10 em 10 segundos
+    { duration: '40s', target: 10 }, // Sustentação: Mantém o número de usuários virtuais em 10 por 40 segundos
+    { duration: '10s', target: 5 }, // Ramp-down: Reduz gradualmente o número de usuários virtuais de 10 para 0 em 10 segundos
+    { duration: '5s', target: 0 }, // Finaliza o teste com 0 usuários virtuais
+ ],        
 }
 
 // A função exportada como padrão será usada pelo k6 como ponto de entrada do script de teste. 
 // Ela será executada repetidamente, em “iterações”, durante toda a duração do teste.
 export default function () {
-  const url = 'http://localhost:3000/login';
+  const url = pegarBaseUrl() + '/login';
   
   // O RequestBody é um objeto JSON que contém os dados que serão enviados no corpo da requisição POST, é o payload da requisição.
-  const payload = JSON.stringify({
-    username: 'julio.lima',
-    senha: '123456',
-  });
+  const payload = JSON.stringify(postLogin);
   
   const params = {
     headers: {

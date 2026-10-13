@@ -1,14 +1,32 @@
-# Banco API — Testes de performance com JavaScript e k6
+# 🏦 Banco API · Testes de performance
 
-## Introdução
+**JavaScript + Grafana k6 | Autenticação · Transferências · Métricas**
+
+Projeto de estudos para praticar testes de performance de uma API bancária, com cenários de login e transferência entre contas.
+
+📂 [Repositório](https://github.com/susirosa-dev/banco-api-performance) · 📖 [Documentação do k6](https://grafana.com/docs/k6/latest/)
+
+### Navegue pelo README
+
+- [Introdução](#-introdução)
+- [Tecnologias utilizadas](#-tecnologias-utilizadas)
+- [Estrutura do repositório](#-estrutura-do-repositório)
+- [Objetivo de cada grupo de arquivos](#-objetivo-de-cada-grupo-de-arquivos)
+- [Instalação do projeto](#-instalação-do-projeto)
+- [Execução do projeto](#-execução-do-projeto)
+- [Autoria e contexto de aprendizagem](#-autoria-e-contexto-de-aprendizagem)
+
+---
+
+## 🎯 Introdução
 
 Este repositório reúne testes desenvolvidos em JavaScript com Grafana k6 para avaliar uma API bancária. Os scripts exercitam autenticação e transferência entre contas, verificando respostas HTTP e coletando métricas durante a execução.
 
 O projeto permite configurar o endereço da API pela variável de ambiente `BASE_URL`. Quando ela não é informada ou está vazia, os scripts utilizam o endereço definido em `config/config.local.json`: `http://localhost:3000`.
 
-Repositório: [banco-api-performance](https://github.com/susirosa-dev/banco-api-performance).
+> **URL configurável:** use `BASE_URL` para escolher o ambiente ou execute com o endereço padrão da configuração local.
 
-## Tecnologias utilizadas
+## 🛠️ Tecnologias utilizadas
 
 | Tecnologia | Utilização |
 | --- | --- |
@@ -20,7 +38,7 @@ Repositório: [banco-api-performance](https://github.com/susirosa-dev/banco-api-
 
 Os scripts são executados pelo k6, e não pelo Node.js. Não é necessário executar `npm install` para os arquivos atuais do projeto.
 
-## Estrutura do repositório
+## 📁 Estrutura do repositório
 
 ```text
 banco-api-performance/
@@ -40,7 +58,7 @@ banco-api-performance/
 
 O arquivo `html-report.html` é gerado ao executar a exportação do relatório e está listado no `.gitignore`.
 
-## Objetivo de cada grupo de arquivos
+## 🧩 Objetivo de cada grupo de arquivos
 
 | Grupo ou arquivo | Objetivo |
 | --- | --- |
@@ -51,7 +69,7 @@ O arquivo `html-report.html` é gerado ao executar a exportação do relatório 
 | `utils/` | Reúne utilitários de apoio. `variaveis.js` obtém a URL da variável `BASE_URL` ou da configuração local. |
 | `.gitignore` | Define arquivos que não devem ser versionados, incluindo `html-report.html`. |
 
-### Teste de login
+### 🔐 Teste de login
 
 O arquivo `tests/login.test.js` envia uma requisição `POST /login` com os dados da fixture. Seus checks verificam o status `200` e se o token retornado é uma string.
 
@@ -68,12 +86,14 @@ As etapas somam 65 segundos, além do eventual tempo de finalização das itera�
 
 Os thresholds estabelecem os seguintes critérios:
 
-- Tempo máximo de resposta inferior a 5.000 ms.
-- Percentil 90 do tempo de resposta inferior a 3.000 ms.
-- Percentil 95 do tempo de resposta inferior a 4.000 ms.
-- Taxa de falhas HTTP inferior a 1%.
+| Métrica | Critério de aprovação |
+| --- | --- |
+| Tempo máximo de resposta | Inferior a 5.000 ms |
+| Percentil 90 | Inferior a 3.000 ms |
+| Percentil 95 | Inferior a 4.000 ms |
+| Taxa de falhas HTTP | Inferior a 1% |
 
-### Teste de transferência
+### 💸 Teste de transferência
 
 O arquivo `tests/transferencias.test.js` executa uma única iteração. Primeiro realiza o login pelo helper; depois envia uma requisição `POST /transferencias`, com o token no cabeçalho `Authorization: Bearer ...`.
 
@@ -81,7 +101,9 @@ O payload atual utiliza `contaOrigem: 1`, `contaDestino: 2` e `valor: 12`. O che
 
 Essa configuração serve para verificar o fluxo de transferência e coletar suas métricas; uma única iteração não caracteriza um teste de carga sustentada. Para simular carga nesse fluxo, é necessário definir uma configuração apropriada e preparar os dados das contas para múltiplas transferências.
 
-## Instalação do projeto
+---
+
+## 📦 Instalação do projeto
 
 ### 1. Instalar os pré-requisitos
 
@@ -136,11 +158,11 @@ A configuração local é:
 
 Mesmo quando `BASE_URL` é informada, mantenha esse arquivo disponível: o utilitário o carrega durante a inicialização.
 
-## Execução do projeto
+## ▶️ Execução do projeto
 
 Execute os comandos abaixo na raiz do repositório. Cada comando inicia um script separadamente.
 
-### Execução sem informar BASE_URL
+### 1. Usar a configuração local
 
 Quando `BASE_URL` não está definida no terminal, os scripts usam a configuração local:
 
@@ -149,7 +171,7 @@ k6 run tests/login.test.js
 k6 run tests/transferencias.test.js
 ```
 
-### Execução informando BASE_URL
+### 2. Escolher o ambiente com BASE_URL
 
 Passe a variável com `-e` ou `--env`:
 
@@ -168,7 +190,7 @@ return __ENV.BASE_URL || configLocal.baseurl;
 
 `__ENV` tem dois underscores e é disponibilizado pelo k6. O argumento `-e` fornece variáveis aos scripts; ele não configura as opções internas do k6. Veja a [documentação de variáveis de ambiente](https://grafana.com/docs/k6/latest/using-k6/environment-variables/).
 
-### Acompanhamento em tempo real e exportação do relatório HTML
+### 3. Acompanhar em tempo real e exportar o relatório HTML
 
 Ative o painel com `K6_WEB_DASHBOARD=true` e configure o arquivo de saída com `K6_WEB_DASHBOARD_EXPORT=html-report.html`. Essas são variáveis do próprio k6 e devem ser definidas no ambiente do terminal.
 
@@ -202,3 +224,11 @@ Remove-Item Env:K6_WEB_DASHBOARD_EXPORT -ErrorAction SilentlyContinue
 ```
 
 Uma nova exportação com o mesmo nome substitui o relatório anterior. Altere o valor de `K6_WEB_DASHBOARD_EXPORT` para preservar relatórios de execuções diferentes.
+
+---
+
+## 👩‍💻 Autoria e contexto de aprendizagem
+
+Este projeto de testes foi desenvolvido por mim, [susirosa-dev](https://github.com/susirosa-dev), a partir das aulas da **Mentoria 2.0 do Júlio de Lima**.
+
+O repositório registra minha prática e meu aprendizado em testes de performance com JavaScript e k6, incluindo autenticação, organização dos scripts, configuração de ambientes e análise de métricas.

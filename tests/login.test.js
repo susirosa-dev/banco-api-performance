@@ -1,6 +1,7 @@
 // Escrevendo teste de performance com k6
 import http from 'k6/http';
 import { sleep, check } from 'k6';
+import { pegarBaseUrl } from '../utils/variaveis.js';
 const postLogin = JSON.parse(open('../fixtures/postLogin.json')); // Importando o arquivo JSON com os dados de login
 
 export const options = {  
@@ -22,7 +23,7 @@ export const options = {
 // A função exportada como padrão será usada pelo k6 como ponto de entrada do script de teste. 
 // Ela será executada repetidamente, em “iterações”, durante toda a duração do teste.
 export default function () {
-  const url = 'http://localhost:3000/login';
+  const url = pegarBaseUrl() + '/login';
   
   // O RequestBody é um objeto JSON que contém os dados que serão enviados no corpo da requisição POST, é o payload da requisição.
   const payload = JSON.stringify(postLogin);

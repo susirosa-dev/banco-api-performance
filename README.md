@@ -1,0 +1,234 @@
+# 🏦 Banco API · Testes de performance
+
+**JavaScript + Grafana k6 | Autenticação · Transferências · Métricas**
+
+Projeto de estudos para praticar testes de performance de uma API bancária, com cenários de login e transferência entre contas.
+
+📂 [Repositório](https://github.com/susirosa-dev/banco-api-performance) · 📖 [Documentação do k6](https://grafana.com/docs/k6/latest/)
+
+### Navegue pelo README
+
+- [Introdução](#-introdução)
+- [Tecnologias utilizadas](#-tecnologias-utilizadas)
+- [Estrutura do repositório](#-estrutura-do-repositório)
+- [Objetivo de cada grupo de arquivos](#-objetivo-de-cada-grupo-de-arquivos)
+- [Instalação do projeto](#-instalação-do-projeto)
+- [Execução do projeto](#-execução-do-projeto)
+- [Autoria e contexto de aprendizagem](#-autoria-e-contexto-de-aprendizagem)
+
+---
+
+## 🎯 Introdução
+
+Este repositório reúne testes desenvolvidos em JavaScript com Grafana k6 para avaliar uma API bancária. Os scripts exercitam autenticação e transferência entre contas, verificando respostas HTTP e coletando métricas durante a execução.
+
+O projeto permite configurar o endereço da API pela variável de ambiente `BASE_URL`. Quando ela não é informada ou está vazia, os scripts utilizam o endereço definido em `config/config.local.json`: `http://localhost:3000`.
+
+> **URL configurável:** use `BASE_URL` para escolher o ambiente ou execute com o endereço padrão da configuração local.
+
+## 🛠️ Tecnologias utilizadas
+
+| Tecnologia | Utilização |
+| --- | --- |
+| JavaScript | Implementação dos scripts e funções auxiliares. |
+| Grafana k6 | Execução dos testes, simulação de usuários virtuais, validações e coleta de métricas. |
+| JSON | Armazenamento dos dados de login e da configuração local. |
+| Git e GitHub | Controle de versão e compartilhamento do projeto. |
+| Web Dashboard do k6 | Acompanhamento em tempo real e exportação de relatório HTML. |
+
+Os scripts são executados pelo k6, e não pelo Node.js. Não é necessário executar `npm install` para os arquivos atuais do projeto.
+
+## 📁 Estrutura do repositório
+
+```text
+banco-api-performance/
+├── config/
+│   └── config.local.json
+├── fixtures/
+│   └── postLogin.json
+├── helpers/
+│   └── autenticacao.js
+├── tests/
+│   ├── login.test.js
+│   └── transferencias.test.js
+├── utils/
+│   └── variaveis.js
+└── .gitignore
+```
+
+O arquivo `html-report.html` é gerado ao executar a exportação do relatório e está listado no `.gitignore`.
+
+## 🧩 Objetivo de cada grupo de arquivos
+
+| Grupo ou arquivo | Objetivo |
+| --- | --- |
+| `config/` | Guarda configurações locais. `config.local.json` define o endereço padrão na propriedade `baseurl`. |
+| `fixtures/` | Guarda os dados utilizados nas requisições. `postLogin.json` contém o corpo enviado ao endpoint de login. |
+| `helpers/` | Reúne funções reutilizáveis para os fluxos dos testes. `autenticacao.js` realiza o login e retorna o token da resposta. |
+| `tests/` | Contém os scripts executáveis pelo k6 e suas configurações de execução. |
+| `utils/` | Reúne utilitários de apoio. `variaveis.js` obtém a URL da variável `BASE_URL` ou da configuração local. |
+| `.gitignore` | Define arquivos que não devem ser versionados, incluindo `html-report.html`. |
+
+### 🔐 Teste de login
+
+O arquivo `tests/login.test.js` envia uma requisição `POST /login` com os dados da fixture. Seus checks verificam o status `200` e se o token retornado é uma string.
+
+A carga configurada segue quatro etapas:
+
+| Etapa | Duração | Quantidade-alvo de usuários virtuais |
+| --- | --- | --- |
+| Aumento da carga | 10 segundos | 10 |
+| Sustentação | 40 segundos | 10 |
+| Redução parcial | 10 segundos | 5 |
+| Encerramento da carga | 5 segundos | 0 |
+
+As etapas somam 65 segundos, além do eventual tempo de finalização das iterações. Cada iteração inclui uma pausa de 1 segundo.
+
+Os thresholds estabelecem os seguintes critérios:
+
+| Métrica | Critério de aprovação |
+| --- | --- |
+| Tempo máximo de resposta | Inferior a 5.000 ms |
+| Percentil 90 | Inferior a 3.000 ms |
+| Percentil 95 | Inferior a 4.000 ms |
+| Taxa de falhas HTTP | Inferior a 1% |
+
+### 💸 Teste de transferência
+
+O arquivo `tests/transferencias.test.js` executa uma única iteração. Primeiro realiza o login pelo helper; depois envia uma requisição `POST /transferencias`, com o token no cabeçalho `Authorization: Bearer ...`.
+
+O payload atual utiliza `contaOrigem: 1`, `contaDestino: 2` e `valor: 12`. O check verifica o status `201`, e o script registra o status e o corpo da resposta no terminal.
+
+Essa configuração serve para verificar o fluxo de transferência e coletar suas métricas; uma única iteração não caracteriza um teste de carga sustentada. Para simular carga nesse fluxo, é necessário definir uma configuração apropriada e preparar os dados das contas para múltiplas transferências.
+
+---
+
+## 📦 Instalação do projeto
+
+### 1. Instalar os pré-requisitos
+
+Instale o [Git](https://git-scm.com/downloads) e o [Grafana k6](https://grafana.com/docs/k6/latest/set-up/install-k6/).
+
+No Windows, com o Windows Package Manager disponível:
+
+```powershell
+winget install k6 --source winget
+```
+
+No macOS, com Homebrew:
+
+```bash
+brew install k6
+```
+
+Para Linux ou instalação pelo instalador oficial, consulte a documentação de instalação do k6 indicada acima.
+
+Depois da instalação, abra um novo terminal, se necessário, e confira:
+
+```text
+git --version
+k6 version
+```
+
+### 2. Clonar o repositório
+
+```text
+git clone https://github.com/susirosa-dev/banco-api-performance.git
+cd banco-api-performance
+```
+
+### 3. Preparar a API e os dados
+
+Este repositório contém os testes; a API bancária precisa estar em execução separadamente.
+
+Antes de executar:
+
+- Disponibilize a API no endereço escolhido, com os endpoints `/login` e `/transferencias`.
+- Confira os dados de autenticação em `fixtures/postLogin.json` e utilize credenciais válidas no ambiente de teste.
+- Confira se as contas utilizadas pelo teste de transferência existem, se o usuário possui permissão e se há saldo suficiente.
+- Ajuste o payload da transferência quando os dados do seu ambiente forem diferentes.
+
+A configuração local é:
+
+```json
+{
+  "baseurl": "http://localhost:3000"
+}
+```
+
+Mesmo quando `BASE_URL` é informada, mantenha esse arquivo disponível: o utilitário o carrega durante a inicialização.
+
+## ▶️ Execução do projeto
+
+Execute os comandos abaixo na raiz do repositório. Cada comando inicia um script separadamente.
+
+### 1. Usar a configuração local
+
+Quando `BASE_URL` não está definida no terminal, os scripts usam a configuração local:
+
+```text
+k6 run tests/login.test.js
+k6 run tests/transferencias.test.js
+```
+
+### 2. Escolher o ambiente com BASE_URL
+
+Passe a variável com `-e` ou `--env`:
+
+```text
+k6 run -e BASE_URL=http://localhost:3000 tests/login.test.js
+k6 run -e BASE_URL=http://localhost:3000 tests/transferencias.test.js
+```
+
+Substitua o endereço conforme o ambiente. Informe a URL base sem a barra final, pois os scripts acrescentam `/login` e `/transferencias`.
+
+O utilitário aplica a seguinte prioridade:
+
+```js
+return __ENV.BASE_URL || configLocal.baseurl;
+```
+
+`__ENV` tem dois underscores e é disponibilizado pelo k6. O argumento `-e` fornece variáveis aos scripts; ele não configura as opções internas do k6. Veja a [documentação de variáveis de ambiente](https://grafana.com/docs/k6/latest/using-k6/environment-variables/).
+
+### 3. Acompanhar em tempo real e exportar o relatório HTML
+
+Ative o painel com `K6_WEB_DASHBOARD=true` e configure o arquivo de saída com `K6_WEB_DASHBOARD_EXPORT=html-report.html`. Essas são variáveis do próprio k6 e devem ser definidas no ambiente do terminal.
+
+**Windows — PowerShell:**
+
+```powershell
+$env:K6_WEB_DASHBOARD = "true"
+$env:K6_WEB_DASHBOARD_EXPORT = "html-report.html"
+k6 run -e BASE_URL=http://localhost:3000 tests/login.test.js
+```
+
+**Linux, macOS ou Git Bash — Bash:**
+
+```bash
+K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_EXPORT=html-report.html k6 run -e BASE_URL=http://localhost:3000 tests/login.test.js
+```
+
+Para usar o endereço da configuração local, remova `-e BASE_URL=http://localhost:3000` dos comandos, desde que `BASE_URL` também não esteja definida no terminal.
+
+Durante o teste, acesse [http://localhost:5665](http://localhost:5665) para acompanhar as métricas. Ao terminar, o relatório será exportado para `html-report.html` na pasta de execução e poderá ser aberto em um navegador ou compartilhado como arquivo.
+
+Use `tests/transferencias.test.js` no lugar de `tests/login.test.js` para acompanhar a transferência. Como esse script executa apenas uma iteração, pode terminar antes de produzir gráficos no relatório.
+
+Na configuração padrão, o período de agregação do painel é de 10 segundos. O relatório inclui gráficos quando a duração do teste é superior a três vezes esse período. Se o processo permanecer aberto após o término, feche a aba do painel para permitir sua saída. Consulte a [documentação do Web Dashboard](https://grafana.com/docs/k6/latest/results-output/web-dashboard/).
+
+No PowerShell, as variáveis permanecem definidas na sessão. Para desativar o painel e a exportação nas próximas execuções:
+
+```powershell
+Remove-Item Env:K6_WEB_DASHBOARD -ErrorAction SilentlyContinue
+Remove-Item Env:K6_WEB_DASHBOARD_EXPORT -ErrorAction SilentlyContinue
+```
+
+Uma nova exportação com o mesmo nome substitui o relatório anterior. Altere o valor de `K6_WEB_DASHBOARD_EXPORT` para preservar relatórios de execuções diferentes.
+
+---
+
+## 👩‍💻 Autoria e contexto de aprendizagem
+
+Este projeto de testes foi desenvolvido por mim, [susirosa-dev](https://github.com/susirosa-dev), a partir das aulas da **Mentoria 2.0 do Júlio de Lima**.
+
+O repositório registra minha prática e meu aprendizado em testes de performance com JavaScript e k6, incluindo autenticação, organização dos scripts, configuração de ambientes e análise de métricas.
